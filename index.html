@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>NEBULA FORGE 3D — Vũ Trụ Tương Tác & Hạt Lượng Tử</title>
+  <meta name="description" content="Trải nghiệm không gian 3D tương tác thời gian thực với Three.js, GLSL Shaders, Unreal Bloom Post-Processing và Âm thanh Web Audio." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./style.css" />
+
+  <!-- Import Map for Three.js r170 & Addons -->
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+<body>
+  <!-- WebGL Canvas Container -->
+  <div id="canvas-container"></div>
+
+  <!-- Loading Overlay -->
+  <div id="loader" class="loader-overlay">
+    <div class="loader-Core">
+      <div class="ring ring-1"></div>
+      <div class="ring ring-2"></div>
+      <div class="ring ring-3"></div>
+      <div class="core-dot"></div>
+    </div>
+    <h1 class="loader-title">NEBULA FORGE <span>3D</span></h1>
+    <p class="loader-subtitle">Đang khởi tạo Lõi Thực Tại &amp; Shaders GLSL...</p>
+    <div class="loader-bar-wrap">
+      <div id="loader-bar" class="loader-bar"></div>
+    </div>
+  </div>
+
+  <!-- Top Telemetry Bar -->
+  <header class="hud-top" id="hud-top">
+    <div class="brand">
+      <div class="brand- emblem">
+        <span class="pulse-dot"></span>
+      </div>
+      <div>
+        <div class="brand-title">NEBULA FORGE <span class="badge">WEBGL 2.0</span></div>
+        <div class="brand-sub">Bản Giao Hưởng Vũ Trụ Tương Tác 3D</div>
+      </div>
+    </div>
+
+    <!-- Mode Switcher Pills -->
+    <nav class="mode-nav" aria-label="Chế độ mô phỏng 3D">
+      <button class="mode-btn active" data-mode="blackhole">
+        <span class="mode-icon">🕳️</span>
+        <span>Hố Đen Gargantua</span>
+      </button>
+      <button class="mode-btn" data-mode="quantum">
+        <span class="mode-icon">🧬</span>
+        <span>Lõi Lượng Tử</span>
+      </button>
+      <button class="mode-btn" data-mode="solaris">
+        <span class="mode-icon">🪐</span>
+        <span>Hệ Hành Tinh</span>
+      </button>
+      <button class="mode-btn" data-mode="cyberwave">
+        <span class="mode-icon">🌊</span>
+        <span>Sóng Ngân Hà</span>
+      </button>
+    </nav>
+
+    <!-- Quick Action Buttons -->
+    <div class="top-actions">
+      <button id="btn-audio" class="icon-btn" title="Bật/Tắt Âm Thanh Vũ Trụ (Synth)">
+        <span id="audio-icon">🔇</span>
+        <span class="btn-label">Âm Thanh: TẮT</span>
+      </button>
+      <button id="btn-photo" class="icon-btn" title="Chụp Ảnh Màn Hình 3D">
+        <span>📸</span>
+      </button>
+      <button id="btn-hud" class="icon-btn" title="Ẩn/Hiện Giao Diện (Phím H)">
+        <span>👁️</span>
+      </button>
+      <button id="btn-fullscreen" class="icon-btn" title="Toàn Màn Hình (Phím F)">
+        <span>⛶</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Left Telemetry & Guide Panel -->
+  <aside class="hud-panel hud-left" id="hud-left">
+    <div class="panel-header">
+      <span class="panel-tag">TELEMETRY // 01</span>
+      <h2>THÔNG SỐ VŨ TRỤ</h2>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <span class="stat-label">FPS</span>
+        <span class="stat-value" id="stat-fps">60</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">HẠT LƯỢNG TỬ</span>
+        <span class="stat-value" id="stat-particles">32,000</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">TRƯỜNG LỰC</span>
+        <span class="stat-value" id="stat-force">XOÁY HÚT</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">THIÊN THỂ</span>
+        <span class="stat-value" id="stat-bodies">12</span>
+      </div>
+    </div>
+
+    <div class="mode-description" id="mode-desc-box">
+      <h3 id="mode-title">Hố Đen Siêu Khối Lượng Gargantua</h3>
+      <p id="mode-desc">
+        Mô phỏng đĩa bồi tụ phát sáng quanh chân trời sự kiện. Di chuyển chuột để bẻ cong không-thời gian hoặc kích hoạt vụ nổ Siêu Tân Tinh.
+      </p>
+    </div>
+
+    <div class="interaction-guide">
+      <h4>🎮 HƯỚNG DẪN TƯƠNG TÁC</h4>
+      <ul>
+        <li><kbd>Kéo Chuột Trái</kbd> Xoay góc nhìn 360°</li>
+        <li><kbd>Kéo Chuột Phải</kbd> Dịch chuyển tâm camera</li>
+        <li><kbd>Con Lăn</kbd> Thu phóng khoảng cách</li>
+        <li><kbd>Di Chuột</kbd> Tương tác lực vật lý lên hạt 3D</li>
+        <li><kbd>Click Đúp</kbd> Phóng thiên thạch / Tạo xung kích</li>
+        <li><kbd>Space</kbd> Kích hoạt vụ nổ Siêu Tân Tinh</li>
+      </ul>
+    </div>
+  </aside>
+
+  <!-- Right Studio Control Panel -->
+  <aside class="hud-panel hud-right" id="hud-right">
+    <div class="panel-header">
+      <span class="panel-tag">CONTROL // 02</span>
+      <h2>BẢNG ĐIỀU KHIỂN 3D</h2>
+    </div>
+
+    <!-- Force Mode Selector -->
+    <div class="control-group">
+      <label class="control-label">Chế Độ Tương Tác Chuột</label>
+      <div class="segmented-control" id="force-selector">
+        <button class="seg-btn active" data-force="vortex">🌀 Xoáy</button>
+        <button class="seg-btn" data-force="attract">🧲 Hút</button>
+        <button class="seg-btn" data-force="repel">💥 Đẩy</button>
+      </div>
+    </div>
+
+    <!-- Color Theme Presets -->
+    <div class="control-group">
+      <label class="control-label">Bảng Màu Tinh Vân (Palette)</label>
+      <div class="palette-row" id="palette-selector">
+        <button class="palette-swatch active" data-palette="interstellar" title="Interstellar Gold & Cyan" style="--c1:#ff9d2e; --c2:#00e5ff;"></button>
+        <button class="palette-swatch" data-palette="cyberpunk" title="Cyberpunk Neon" style="--c1:#ff007f; --c2:#00f0ff;"></button>
+        <button class="palette-swatch" data-palette="matrix" title="Quantum Emerald" style="--c1:#00ff88; --c2:#0066ff;"></button>
+        <button class="palette-swatch" data-palette="supernova" title="Crimson Supernova" style="--c1:#ff2a2a; --c2:#ffcc00;"></button>
+        <button class="palette-swatch" data-palette="aurora" title="Violet Aurora" style="--c1:#a855f7; --c2:#38bdf8;"></button>
+      </div>
+    </div>
+
+    <!-- Sliders -->
+    <div class="control-group">
+      <div class="slider-header">
+        <span>Tốc Độ Dòng Chảy</span>
+        <span class="slider-val" id="val-speed">1.0x</span>
+      </div>
+      <input type="range" id="slider-speed" min="0" max="3" step="0.05" value="1.0" />
+    </div>
+
+    <div class="control-group">
+      <div class="slider-header">
+        <span>Cường Độ Phát Sáng (Bloom)</span>
+        <span class="slider-val" id="val-bloom">1.4</span>
+      </div>
+      <input type="range" id="slider-bloom" min="0.2" max="3.0" step="0.05" value="1.4" />
+    </div>
+
+    <div class="control-group">
+      <div class="slider-header">
+        <span>Bán Kính Trường Lực Chuột</span>
+        <span class="slider-val" id="val-radius">18</span>
+      </div>
+      <input type="range" id="slider-radius" min="5" max="45" step="1" value="18" />
+    </div>
+
+    <div class="control-group">
+      <div class="slider-header">
+        <span>Kích Thước Hạt Ánh Sáng</span>
+        <span class="slider-val" id="val-size">1.2</span>
+      </div>
+      <input type="range" id="slider-size" min="0.4" max="3.0" step="0.1" value="1.2" />
+    </div>
+
+    <!-- Toggles -->
+    <div class="toggles-row">
+      <label class="toggle-item">
+        <input type="checkbox" id="toggle-autorotate" checked />
+        <span>Tự xoay Camera</span>
+      </label>
+      <label class="toggle-item">
+        <input type="checkbox" id="toggle-grid" checked />
+        <span>Lưới Không-Thời Gian</span>
+      </label>
+    </div>
+
+    <!-- Action CTA Buttons -->
+    <div class="cta-stack">
+      <button id="btn-supernova" class="btn-primary">
+        <span>💥 KÍCH HOẠT SIÊU TÂN TINH</span>
+      </button>
+      <div class="cta-subrow">
+        <button id="btn-spawn-comet" class="btn-secondary">☄️ Phóng Sao Chổi</button>
+        <button id="btn-reset-cam" class="btn-secondary">🎯 Đặt Lại Góc Nhìn</button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Floating Bottom Hint / Toast -->
+  <div class="hud-bottom" id="hud-bottom">
+    <div class="toast-pill" id="toast-message">
+      ✨ Di chuột trên không gian 3D hoặc nhấn <strong>Click Đúp</strong> để phóng Sao Chổi!
+    </div>
+  </div>
+
+  <!-- Hidden button to restore HUD when hidden -->
+  <button id="btn-restore-hud" class="restore-hud-btn hidden" title="Hiện lại Giao diện (H)">
+    👁️ Hiện Giao Diện
+  </button>
+
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
